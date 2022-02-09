@@ -1,47 +1,47 @@
 ### GeneticFuzzySystem Python Package
 
-该项目是使用 python 实现的 GFS/GFT 算法包，使用时请将GFS包放入项目路径，并在项目文件中引入该工具包进行使用，或使用 pip install 方式安装该包：
+This project is a GFS/GFT algorithm package implemented with python. Please put the GFS package into the project path when using it, and introduce the toolkit into the project file for use, or use pip install to install the package:
 
 ```powershell
 pip install gfs
-```
+````
 
-（GFS算法原理参考资料可见：[英文版](https://www.cs.princeton.edu/courses/archive/fall07/cos436/HIDDEN/Knapp/fuzzy004.htm)，[中文版](https://blog.csdn.net/qq_38638132/article/details/106477710)）
+(For reference materials on the principle of GFS algorithm, see: [English version](https://www.cs.princeton.edu/courses/archive/fall07/cos436/HIDDEN/Knapp/fuzzy004.htm), [Chinese version](https://blog.csdn.net/qq_38638132/article/details/106477710))
 
-GFS 库中定义了 BaseGFT 基类，GFT 可以支持训练多个 GFS 控制器，一个控制器用于决策一个特定行为。下面对 GFT 算法包使用方法进行简单介绍，以 Open-AI gym 中 CartPole-v0 场景作为训练示例，示例代码见 "main.py"
+The BaseGFT base class is defined in the GFS library. GFT can support training multiple GFS controllers, one controller used to decide a specific behavior. The following is a brief introduction to the use of the GFT algorithm package. The CartPole-v0 scene in Open-AI gym is used as a training example. For the sample code, see "main.py"
 
-#### 1. GFT 决策器的使用方法
+#### 1. How to use the GFT decider
 
-首先从 GFS 包中引入 BaseGFT 基类，
+First import the BaseGFT base class from the GFS package,
 
-```python
+````python
 from GFS.GeneticFuzzySystem import BaseGFT
-```
+````
 
-BaseGFT 内置了基本的 GFT 算法所具备的方法函数，但同时也预留了抽象方法需要用户自己实现（主要为算法模块和环境之间的数据交互过程），因此用户需先继承 BaseGFT 基类，在此基础上实现自定义 GFT 子类：
+BaseGFT has built-in methods and functions of the basic GFT algorithm, but also reserves abstract methods that need to be implemented by the user (mainly the data interaction process between the algorithm module and the environment), so the user needs to inherit the BaseGFT base class first. On this basis, implement a custom GFT subclass:
 
-```python
+````python
 class GFT(BaseGFT):
 
     def __init__(self, rule_lib_list, population_size, episode, mutation_pro, cross_pro, simulator, parallelized):
         """
-        实现自定义GFT子类（继承自BaseGFT基类）并实现自定义计算仿真方法。
-        @param rule_lib_list: 规则库对象
-        @param population_size: 种群规模（存在的染色体条数，可以理解为存在的规则库个数）
-        @param episode: 训练多少轮
-        @param mutation_pro: 变异概率
-        @param cross_pro: 交叉概率
-        @param simulator: 仿真器对象，用于获取观测和回报
-        @param parallelized: 是否启用多进程并行计算
+        Implement custom GFT subclasses (inherited from BaseGFT base class) and implement custom computational simulation methods.
+        @param rule_lib_list: rule library object
+        @param population_size: Population size (the number of existing chromosomes, which can be understood as the number of existing rule bases)
+        @param episode: how many epochs to train
+        @param mutation_pro: mutation probability
+        @param cross_pro: cross probability
+        @param simulator: Simulator object, used to get observations and reports
+        @param parallelized: whether to enable multi-process parallel computing
         """
         super().__init__(rule_lib_list, population_size, episode, mutation_pro, cross_pro, simulator, parallelized)
 
-    """ 实现父类抽象方法 """
+    """ Implement parent class abstract method """
     def start_simulation(self, controllers: list, simulator) -> float:
         """
-        自定义 GFT 算法模块与仿真器 Simulator（gym） 之间的数据交互过程，返回仿真器的 reward 值。
-        @param simulator: 仿真器对象
-        @param controllers: 控制器列表，一个controller决策一个行为。
+        Customize the data interaction process between the GFT algorithm module and the simulator Simulator (gym), and return the reward value of the simulator.
+        @param simulator: Simulator object
+        @param controllers: List of controllers, one controller decides one action.
         @return: fitness
         """
         controller = controllers[0]
@@ -52,7 +52,7 @@ class GFT(BaseGFT):
 
             # simulator.render()
 
-            """ CartPole-v0 中共包含 4 个观测，在FIS决策器中需要对应拆分成 4 个模糊变量输入 """
+            """ CartPole-v0 contains a total of 4 observations, which need to be split into 4 fuzzy variable inputs in the FIS decider. """
             obs_input = {
                 "obs1": obs_list[0],
                 "obs2": obs_list[1],
@@ -60,7 +60,7 @@ class GFT(BaseGFT):
                 "obs4": obs_list[3]
             }
 
-            action = controller.simulation_get_action(obs_input)    # 利用 FIS 决策器获得行为决策
+            action = controller.simulation_get_action(obs_input) # Use FIS decider to get action decision
             obs_list, r, done, _ = simulator.step(action)
             fitness += r
 
@@ -68,16 +68,16 @@ class GFT(BaseGFT):
                 break
 
         return fitness
-```
+````
 
-其中，start_simulation() 方法是用户需要重写的抽象方法，该方法定义了 GFS 算法包如何获取一个规则库的得分（Fitness/Reward），当用户接入不同的仿真环境中时，如何从仿真环境中获取观测（Observation），得分（Reward）等需要在该方法中实现，该函数返回得分值。示例 demo 中以 gym 中 CartPole-v0 场景作为样例，返回 gym env 的 reward 作为 GFS 算法的 Fitness。
+Among them, the start_simulation() method is an abstract method that the user needs to rewrite. This method defines how the GFS algorithm package obtains the score (Fitness/Reward) of a rule base. When the user accesses different simulation environments, how to get the score from the simulation environment Obtaining observations (Observation), scores (Reward), etc. need to be implemented in this method, and this function returns the score value. The example demo uses the CartPole-v0 scene in the gym as an example, and returns the reward of the gym env as the Fitness of the GFS algorithm.
 
-主函数一共分为 4 个步骤：构建模糊变量、分配隶属函数、构建规则库对象、构建 GFS 对象，实现流程如下：
+The main function is divided into 4 steps: constructing fuzzy variables, assigning membership functions, constructing rule base objects, and constructing GFS objects. The implementation process is as follows:
 
-```python
+````python
 if __name__ == '__main__':
     
-	""" 1. 构建模糊变量，采用 gym 中 CartPole-v0 作为示例，共包含 4 个观测输入，1 个行为输出 """
+""" 1. Construct a fuzzy variable, using CartPole-v0 in gym as an example, including 4 observation inputs and 1 behavior output """
     obs1 = FuzzyVariable([-4.9, 4.9], "obs1")
     obs2 = FuzzyVariable([-3.40e+38, 3.40e+38], "obs2")
     obs3 = FuzzyVariable([-0.418, 0.418], "obs3")
@@ -85,93 +85,93 @@ if __name__ == '__main__':
 
     action = FuzzyVariable([0, 1], "action")
 
-    """ 2. 为模糊变量分配隶属函数 """
+    """ 2. Assign membership functions to fuzzy variables """
     obs1.automf(5)
     obs2.automf(5)
     obs3.automf(5)
     obs4.automf(5)
-    action.automf(2, discrete=True)     # 行为输出是离散型的模糊变量
+    action.automf(2, discrete=True) # Action output is a discrete fuzzy variable
 
-    """ 3. 构建 RuleLib 规则库 """
+    """ 3. Build RuleLib rule base """
     controller = RuleLib([obs1, obs2, obs3, obs4, action])
 
-    """ 4. 构建 GFT 对象 """
+    """ 4. Build the GFT object """
     gft = GFT(rule_lib_list=[controller], population_size=40, episode=200, mutation_pro=0.1, cross_pro=0.9,
               simulator=simulator, parallelized=True)
     gft.train()
-```
+````
 
-运行主函数（main.py），程序运行示意图如下：
+Run the main function (main.py), the schematic diagram of the program is as follows:
 
 <div align=center><img src="assets/GFS.gif" width=800></div>
 
 
 
-####  <span id="jump2">2. 训练模型保存</span>
+#### <span id="jump2">2. Save the training model</span>
 
-每一个 Epoch 训练完成后，训练 model 会存放入入口函数目录下的 `./models` 文件夹下，其中 `AllPopulations` 文件夹下存放整个训练过程中一个种群下的所有个体对象，保存了当前的训练状态，可通过载入种群信息恢复总群状态继续进行训练；`OptimalIndividual` 文件夹下存放了每一代中最优秀的个体对象；`RuleLibAndMF`文件夹下保存了最优个体的规则库和隶属函数参数，文件保存名应为：
+After each Epoch training is completed, the training model will be stored in the `./models` folder in the entry function directory. The `AllPopulations` folder stores all the individual objects under a population during the entire training process, and saves the current In the training state, the general group state can be restored by loading the population information to continue training; the `OptimalIndividual` folder stores the best individual objects in each generation; the `RuleLibAndMF` folder saves the rule base and affiliation of the optimal individual Function parameters, the file name should be:
 
-```python
+````python
 [Epoch_N]RuleLib(current_reward)_[No.X].json
-或
+or
 [Epoch_N]MF(current_reward)_[No.X].json
-或
+or
 [Epoch_N]Individual(current_reward)_[No.X].json
-```
+````
 
-RuleLib 代表规则库存放文件，MF 代表隶属函数参数存放文件，current_reward 代表当前个体的具体得分值，[No.X] 代表规则库编号（用于确认决策哪一个对应的行为），如：
+RuleLib represents the rule library storage file, MF represents the membership function parameter storage file, current_reward represents the specific score value of the current individual, [No.X] represents the rule library number (used to confirm which behavior corresponds to the decision), such as:
 
-```python
+````python
 [Epoch_1]RuleLib(834)_[No.0].json
-或
+or
 [Epoch_1]MF(834)_[No.0].json
-或
+or
 [Epoch_1]Individual(834)_[No.X].json
-```
+````
 
-RuleLib 文件中的数据内容如下：
+The data content in the RuleLib file is as follows:
 
-```python
+````python
 {
-    "RuleLib": [[0, 0, 5], [0, 1, 3], [0, 2, 2], [1, 0, 5], [1, 1, 3], [1, 2, 2], [2, 0, 2], [2, 1, 0], [2, 2, 3]], 
+    "RuleLib": [[0, 0, 5], [0, 1, 3], [0, 2, 2], [1, 0, 5], [1, 1, 3], [1, 2, 2], [2, 0, 2], [2, 1, 0], [2, 2, 3]],
     "chromosome": [5, 3, 2, 5, 3, 2, 2, 0, 3]
 }
-```
+````
 
-MF 文件中的数据内容如下：
+The data content in the MF file is as follows:
 
-```python
+````python
 {
-    "mf_offset": [[8, -9, -2, -3, -9, -2, 3, 7, -2, 1, 0, 10, 8, 1, 1, -10, -10, -3, 6, 6, 9, -2, 2, 8, -9, -4, 3, -9, 4, -1, -1, -7, 10, 4, -8, -6], [-4, 10, 5, -3, -4, 0, -7, 4, 4, 1, -7, 9, 6, -6, -3, 4, 8, 10, 3, -3, -4, -4, -8, -5, 5, -1, 9, 6, 3, 7, 10, -2, 6, 3, 10, 4]]
+    "mf_offset": [[8, -9, -2, -3, -9, -2, 3, 7, -2, 1, 0, 10, 8, 1, 1, -10, -10, -3 , 6, 6, 9, -2, 2, 8, -9, -4, 3, -9, 4, -1, -1, -7, 10, 4, -8, -6], [-4 , 10, 5, -3, -4, 0, -7, 4, 4, 1, -7, 9, 6, -6, -3, 4, 8, 10, 3, -3, -4, - 4, -8, -5, 5, -1, 9, 6, 3, 7, 10, -2, 6, 3, 10, 4]]
 }
-```
+````
 
-Individual 文件中的数据内容如下：
+The data content in the Individual file is as follows:
 
-```python
+````python
 {"rule_lib_chromosome": ..., "mf_chromosome": ..., "fitness": 247.50138874281646, "flag": 1}
-```
+````
 
-训练过程中的训练曲线保存在：`./models/tarin_log.png`：
+The training curve during training is saved in: `./models/tarin_log.png`:
 
 <div align=center><img src="assets/train_log.png" width=500></div>
 
-#### 3. pretrained 模型加载
+#### 3. pretrained model loading
 
-当模型训练好后，我们可以调用 gft.evalutate() 函数来查看我们训练模型的效果，评估函数中需要输入模型的保存路径，如：
+When the model is trained, we can call the gft.evalutate() function to view the effect of our training model. The evaluation function needs to enter the save path of the model, such as:
 
-```python
+````python
 gft.evaluate("models/OptimalIndividuals/[Epoch_47]Individual(144.0).json")
-```
+````
 
-模型加载后，修改 start_simulation() 函数，在函数中添加 render() 命令来可视化 CartPole-v0 场景：
+After the model is loaded, modify the start_simulation() function and add the render() command to the function to visualize the CartPole-v0 scene:
 
-```python
+````python
     def start_simulation(self, controllers: list, simulator) -> float:
         """
-        自定义 GFT 算法模块与仿真器 Simulator（gym） 之间的数据交互过程，返回仿真器的 reward 值。
-        @param simulator: 仿真器对象
-        @param controllers: 控制器列表，一个controller决策一个行为。
+        Customize the data interaction process between the GFT algorithm module and the simulator Simulator (gym), and return the reward value of the simulator.
+        @param simulator: Simulator object
+        @param controllers: List of controllers, one controller decides one action.
         @return: fitness
         """
         controller = controllers[0]
@@ -184,40 +184,39 @@ gft.evaluate("models/OptimalIndividuals/[Epoch_47]Individual(144.0).json")
 
             ...
         return fitness
-```
+````
 
-得到如下窗口：
+Get the following window:
 
 <div align=center><img src="assets/gym_demo.gif" width=500></div>
 
 
 #### 4. GFTBoard
 
-为了方便对训练结果进行分析处理，可以运行 `GFS.Tools.GFTBoard.py `  来可视化训练结果：
+In order to facilitate the analysis and processing of the training results, you can run `GFS.Tools.GFTBoard.py` to visualize the training results:
 
-1. 训练过程中 Fitness 曲线图
+1. Fitness graph during training
 
-2. 训练过程中的超参数
+2. Hyperparameters during training
 
-3. 最优模型的文字型规则库
+3. Textual Rule Base for Optimal Models
 
-若要使用GFTBoard，需安装 `dearpygui` 三方库，输入以下命令安装三方库：
+To use GFTBoard, you need to install the `dearpygui` third-party library, enter the following command to install the third-party library:
 
 ```powershell
 pip install dearpygui
-```
+````
 
-安装完成后，运行 `GFTBorad.py` 文件，（若使用 pip install 下载则在 Terminal 中运行：python -m GFS.Tools.GFTBoard 即可）得到如下界面：
+After the installation is complete, run the `GFTBorad.py` file (if you use pip install to download, run it in Terminal: python -m GFS.Tools.GFTBoard) to get the following interface:
 
 <div align=center><img src="assets/GFSBoard1.png" width=600></div>
 
-点击 `Choose Log File` 按钮，选择保存的模型文件，文件保存位置通常在 `models` 文件夹下，名为 `events.out.gft` 文件，打开后，界面上出现训练过程中的 fitness 变化曲线，同时，右边窗口出现训练过程中的超参数设置（训练轮数，基因突变率等），如下：
+Click the `Choose Log File` button, select the saved model file, the file is usually saved in the `models` folder, named `events.out.gft` file, after opening, the fitness curve during the training process will appear on the interface , at the same time, the hyperparameter settings during the training process (number of training rounds, gene mutation rate, etc.) appear in the right window, as follows:
 
 <div align=center><img src="assets/GFSBoard2.png" width=600></div>
 
-接下来，点击 `Choose Individual` 按钮，选择 `OptimalIndividuals` 文件夹下的一个 Individual 文件查看一个最优模型的模糊规则库：
+Next, click the `Choose Individual` button and select an Individual file in the `OptimalIndividuals` folder to view the fuzzy rule base for an optimal model:
 
 <div align=center><img src="assets/GFSBoard3.png" width=600></div>
 
 <div align=center><img src="assets/GFSBoard4.png" width=600></div>
-
