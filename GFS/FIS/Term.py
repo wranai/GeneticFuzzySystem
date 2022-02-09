@@ -21,22 +21,22 @@ class TermPrimitive(object):
 
 class Term(TermPrimitive):
     def __init__(self, label: str, parent: str, trimf: list, id: int):
-        self.label = label  # 标签
-        self.parent = parent  # 标签的父变量
-        self.trimf = trimf  # 三角形隶属函数的三个顶点
+        self.label = label # label
+        self.parent = parent # parent variable of label
+        self.trimf = trimf # three vertices of the triangle membership function
         self.span = max(trimf[1] - trimf[0], trimf[2] - trimf[1])
-        self.id = id  # term编号
+        self.id = id # term number
 
     def compute_membership_value(self, value):
         """
-        根据隶属函数计算变量隶属于这一term的隶属度
-        :param value: 变量的值
-        :return: 变量隶属该Term的隶属度
+        Calculate the membership degree of the variable belonging to this term according to the membership function
+        :param value: the value of the variable
+        :return: The membership degree of the variable to which the Term belongs
         """
         a = self.trimf[0]
         b = self.trimf[1]
         c = self.trimf[2]
-        if a == b and b == c and a == 0:  # 类别型模糊变量
+        if a == b and b == c and a == 0: # categorical fuzzy variable
             if value == self.id:
                 return 1
             else:
@@ -55,7 +55,7 @@ class Term(TermPrimitive):
                 return 1
             else:
                 return (value - a) / (b - a)
-        # 普通三角型隶属函数
+        # Ordinary triangular membership function
         if value < a:
             return 0
         elif value > c:
@@ -78,7 +78,7 @@ class FuzzyAggregationMethods(object):
 
 class TermAggregate(TermPrimitive):
     """
-    使用AND，OR连接两个TermPrimitive
+    Use AND, OR to connect two TermPrimitives
     """
 
     def __init__(self, term1, term2, kind):
@@ -105,15 +105,15 @@ class TermAggregate(TermPrimitive):
             raise ValueError("Expected FuzzyAggregationMethods")
         self._agg_methods = agg_methods
 
-        # 将聚合方法向下传递给TermPrimitive
+        # Pass the aggregation method down to TermPrimitive
         for term in (self.term1, self.term2):
             if isinstance(term, TermAggregate):
                 term.agg_methods = agg_methods
 
     def compute_value(self, input):
         """
-        根据具体模糊变量的数值计算该TermAggregate的数值
-        :param input:输入字典
+        Calculate the value of the TermAggregate according to the value of the specific fuzzy variable
+        :param input: input dictionary
         :return:
         """
         term1_value = None
