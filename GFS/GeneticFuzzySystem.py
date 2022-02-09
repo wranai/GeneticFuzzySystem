@@ -21,15 +21,15 @@ class BaseGFT(metaclass=ABCMeta):
     def __init__(self, rule_lib_list, population_size, episode, mutation_pro, cross_pro, simulator, parallelized=False,
                  protect_elite_num=1, save_interval=1):
         """
-        GFT基类。
-        @param rule_lib_list: 规则库对象
-        @param population_size: 种群规模（存在的染色体条数，可以理解为存在的规则库个数）
-        @param episode: 训练多少轮
-        @param mutation_pro: 变异概率
-        @param cross_pro: 交叉概率
-        @param protect_elite_num: 精英染色体保护数目，fitness 最大的 N 条染色体不参与 mutate
-        @param simulator: 仿真环境对象，用于获取观测、回报等
-        @param save_interval: 多少轮 Epoch 保存一次模型
+        GFT base class.
+        @param rule_lib_list: rule library object
+        @param population_size: Population size (the number of existing chromosomes, which can be understood as the number of existing rule bases)
+        @param episode: how many epochs to train
+        @param mutation_pro: mutation probability
+        @param cross_pro: cross probability
+        @param protect_elite_num: The number of elite chromosomes to be protected, the N chromosomes with the largest fitness do not participate in mutate
+        @param simulator: Simulation environment object, used to obtain observations, reports, etc.
+        @param save_interval: how many epochs to save the model once
         """
         self.population_size = population_size if not population_size % 2 else population_size + 1
         self.protect_elite_num = protect_elite_num if protect_elite_num <= population_size else population_size
@@ -48,8 +48,8 @@ class BaseGFT(metaclass=ABCMeta):
 
     def init_population(self) -> None:
         """
-        种群初始化函数，初始化规定数目个个体（Individual），一个个体的染色体为二维数组，
-        其中每一维代表一个特定规则库的染色体。
+        Population initialization function, initialize a specified number of individuals (Individual), the chromosome of an individual is a two-dimensional array,
+        Each of these dimensions represents a chromosome of a specific rule base.
         @return: None
         """
         for i in range(self.population_size):
@@ -57,24 +57,24 @@ class BaseGFT(metaclass=ABCMeta):
             mf_chromosome = []
 
             fis_num = len(self.rule_lib_list)
-            """ 由于存在多个规则库，不同规则库由不同的FIS决策器决策不同行为，因此需要为每一个规则库生成一条随机染色体 """
+            """ Since there are multiple rule bases, different FIS deciders decide different behaviors for different rule bases, so a random chromosome needs to be generated for each rule base. """
             for index in range(fis_num):
                 output_fuzzy_variable = self.rule_lib_list[index].fuzzy_variable_list[-1]
                 output_terms = output_fuzzy_variable.all_term()
 
-                """ 将输出模糊变量的term按id数字化 """
+                """ Digitize the term output fuzzy variable by id """
                 genes = [term.id for term in output_terms]
                 all_term_list = [term for fuzzy_variable in self.rule_lib_list[index].fuzzy_variable_list
                                  for term in fuzzy_variable.all_term()]
                 current_rule_lib_chromosome_size = len(self.rule_lib_list[index].rule_lib)
 
-                """ 默认使用三角隶属函数，因此隶属函数染色体长度等于隶属函数个数*3 """
+                """ Triangular membership function is used by default, so the chromosome length of membership function is equal to the number of membership functions*3 """
                 current_mf_chromosome_size = len(all_term_list) * 3
                 current_rule_lib_chromosome = [genes[random.randint(0, len(genes) - 1)] for _ in
                                                range(current_rule_lib_chromosome_size)]
                 current_mf_chromosome = [random.randint(-10, 10) for _ in range(current_mf_chromosome_size)]
 
-                """ 往个体的染色体中加入代表当前规则库的染色体 """
+                """ Add the chromosome representing the current rule base to the chromosome of the individual """
                 rule_lib_chromosome.append(current_rule_lib_chromosome)
                 mf_chromosome.append(current_mf_chromosome)
 
@@ -85,15 +85,15 @@ class BaseGFT(metaclass=ABCMeta):
 
     def compute_fitness(self, individual: dict, simulator, individual_id=None, queue=None, min_v=None, max_v=None, average_num=1) -> float:
         """
-        计算个体的适应值，需要先将个体的染色体解析成模糊规则库，构成GFT中的FIS，依据该决策器进行仿真，根据最终的仿真结果进行适应值计算，计算方式可以自定义。
-        @param individual_id: 个体id，用于多进程计算的时候确定该个体
-        @param queue: 进程队列，当该进程完成计算后往队列中添加一个信号，便于主进程统计
-        @param simulator: simulator 对象，用于并行计算
-        @param average_num: 取N次实验的实验结果作为返回值
-        @param max_v: 若要对reward进行clip，则设置该最大值，默认为None，不做clip
-        @param min_v: 若要对reward进行clip，则设置该最小值，默认为None，不做clip
-        @param individual: 个体单位
-        @return: 该个体的适应值
+        To calculate the fitness value of an individual, it is necessary to parse the chromosomes of the individual into a fuzzy rule base to form the FIS in the GFT. The simulation is performed according to the decision maker, and the fitness value is calculated according to the final simulation result. The calculation method can be customized.
+        @param individual_id: individual id, used to determine the individual when multi-process computing
+        @param queue: Process queue, when the process completes the calculation, add a signal to the queue to facilitate the main process statistics
+        @param simulator: simulator object for parallel computing
+        @param average_num: Take the experimental results of N experiments as the return value
+        @param max_v: To clip the reward, set the maximum value, the default is None, no clip
+        @param min_v: To clip the reward, set the minimum value, the default is None, no clip
+        @param individual: individual unit
+        @return: the fitness value of the individual
         """
         if self.parallelized:
             assert queue, "Parallelized Mode Need multiprocessing.Queue() object, please pass @param: queue."
@@ -101,18 +101,18 @@ class BaseGFT(metaclass=ABCMeta):
 
         gft_controllers = []
         for index, rule_lib in enumerate(self.rule_lib_list):
-            """ 将RuleLib中的数字编码染色体解析为包含多个Rule对象的列表 """
+            """ Parse numerically encoded chromosomes in RuleLib into a list containing multiple Rule objects """
             rl = RuleLib(rule_lib.fuzzy_variable_list)
             rl.encode_by_chromosome(individual["rule_lib_chromosome"][index])
             rules = rl.decode()
 
-            """ 对模糊变量的隶属函数参数进行重计算，根据染色体中的隶属函数偏移offset来更改隶属函数三角形的三个点坐标 """
+            """ Recalculate the membership function parameters of the fuzzy variables, and change the coordinates of the three points of the membership function triangle according to the membership function offset offset in the chromosome. """
             new_fuzzy_variable_list = copy.deepcopy(rule_lib.fuzzy_variable_list)
             count = 0
             for fuzzy_variable in new_fuzzy_variable_list:
                 for k, v in fuzzy_variable.terms.items():
                     if (v.trimf[0] == v.trimf[1] and v.trimf[1] == v.trimf[2] and v.trimf[2] == 0) or (
-                            v.trimf[0] == -666):  # 类别型模糊变量
+                            v.trimf[0] == -666): # categorical fuzzy variable
                         count += 3
                         continue
                     offset_value = v.span / 20
@@ -120,28 +120,28 @@ class BaseGFT(metaclass=ABCMeta):
                     new_b = v.trimf[1]
                     new_c = v.trimf[2] + individual["mf_chromosome"][index][count + 2] * offset_value
                     new_tri = [new_a, new_b, new_c]
-                    new_tri.sort()  # 因为平移有正有负，平移后可能会出现a点平移到了b点右边，但三角形的三个点不能乱序，因此需要按从小到大排序
+                    new_tri.sort() # Because there are positive and negative translations, point a may move to the right of point b after translation, but the three points of the triangle cannot be out of order, so they need to be sorted from small to large
                     count += 3
                     v.trimf = new_tri
 
-            """ 构建FIS推理器 """
+            """ Build FIS Reasoner """
             now_ds = DecisionSystem(new_fuzzy_variable_list, rules)
             now_dss = DecisionSystemSimulation(now_ds)
             gft_controllers.append(now_dss)
 
         sum_score = 0
-        """ 取N次实验平均值返回结果 """
+        """ Take the average value of N experiments and return the result """
         for i in range(average_num):
             current_reward = self.start_simulation(gft_controllers, simulator)
-            current_reward = min(min_v, current_reward) if min_v else current_reward  # 单局仿真最小值clip
-            current_reward = max(max_v, current_reward) if max_v else current_reward  # 单局仿真最大值clip
+            current_reward = min(min_v, current_reward) if min_v else current_reward # Minimum single-game simulation clip
+            current_reward = max(max_v, current_reward) if max_v else current_reward # Maximum single-game simulation clip
             sum_score += current_reward
         sum_score /= average_num
 
         if self.parallelized:
             queue.put((individual_id, sum_score))
         else:
-            """ 非并行可以直接在该函数内为个体赋值，若使用并行进程则需要通过返回值在主进程中完成个体赋值 """
+            """ Non-parallel can directly assign values ​​to individuals in this function. If parallel processes are used, individual assignments need to be completed in the main process through the return value. """
             individual["fitness"] = sum_score
             individual["flag"] = 1
 
@@ -149,11 +149,11 @@ class BaseGFT(metaclass=ABCMeta):
 
     def visualize_progress(self, epoch: int, total_epoch: int, step: int, total_step: int) -> None:
         """
-        可视化当前计算的进度条。
-        @param epoch: 当前epoch轮数
-        @param total_epoch: 总共epoch轮数
-        @param step: 当前步数
-        @param total_step: 总步数
+        Visualize the progress bar of the current calculation.
+        @param epoch: current epoch round number
+        @param total_epoch: the total number of epoch rounds
+        @param step: the current number of steps
+        @param total_step: total steps
         @return: None
         """
         max_len = 40
@@ -163,12 +163,12 @@ class BaseGFT(metaclass=ABCMeta):
 
     def save_train_history(self, save_image_path="models/train_log.png", save_log_file_path="models/events.out.gft"):
         """
-        保存训练曲线到本地文件中。
-        @param save_log_file_path: 将GFT对象存储路径
-        @param save_image_path: 曲线图存储路径
+        Save the training curve to a local file.
+        @param save_log_file_path: the path to store the GFT object
+        @param save_image_path: the path to save the graph
         @return: None
         """
-        """ 存放训练曲线图到本地 """
+        """ Save the training graph to the local """
         if save_image_path:
             plt.clf()
             plt.grid(True, linestyle='--', alpha=0.5)
@@ -181,7 +181,7 @@ class BaseGFT(metaclass=ABCMeta):
             plt.legend()
             plt.savefig(save_image_path)
 
-        """ 存放当前对象到本地 """
+        """ Save the current object to the local """
         if save_log_file_path:
             log_dict = {
                 "fitness_history": self.fitness_history,
@@ -198,22 +198,22 @@ class BaseGFT(metaclass=ABCMeta):
 
     def compute_with_parallel(self, epoch, total_epoch):
         """
-        并行计算每一个个体的适应值Fitness。
+        The fitness value of each individual is calculated in parallel.
         @return: None
         """
-        """ 统计 flag == 0（未被计算过适应值）的个体对象 """
+        """ Count the individual objects whose flag == 0 (the fitness value has not been calculated) """
         uncalculated_individual_list = list(filter(lambda x: x["flag"] == 0, self.population))
         sum_count, current_count = len(uncalculated_individual_list), 0
         simulator_list = [copy.deepcopy(self.simulator) for _ in range(len(uncalculated_individual_list))]
         process_list, q = [], multiprocessing.Queue()
 
-        """ 为每一个待计算的染色体建立一个新进程 """
+        """ Create a new process for each chromosome to be calculated """
         for count, individual in enumerate(uncalculated_individual_list):
             process = multiprocessing.Process(target=self.compute_fitness, args=(individual, simulator_list[count], count, q))
             process.start()
             process_list.append(process)
 
-        """ 可视化进度条，当所有染色体进程完成计算后退出该函数 """
+        """ Visual progress bar, exit the function when all chromosome processes have finished computing """
         self.visualize_progress(epoch, total_epoch, current_count, sum_count)
         while True:
             individual_id, fitness = q.get()
@@ -226,7 +226,7 @@ class BaseGFT(metaclass=ABCMeta):
 
     def compute_without_parallel(self, epoch, total_epoch):
         """
-        串行计算每一个个体的适应值Fitness。
+        The fitness value of each individual is calculated serially.
         @return: None
         """
         sum_count = len(self.population)
@@ -238,9 +238,9 @@ class BaseGFT(metaclass=ABCMeta):
 
     def select(self, epoch: int, total_epoch: int) -> None:
         """
-        根据fitness来计算每一条染色体被选择的概率，按照概率来选择染色体是否被保留。
-        @param epoch: 当前执行的轮数
-        @param total_epoch: 总共须迭代的轮数
+        Calculate the probability of each chromosome being selected according to fitness, and select whether the chromosome is retained according to the probability.
+        @param epoch: the current number of epochs to execute
+        @param total_epoch: the total number of epochs to iterate
         @return: None
         """
         start = time.time()
@@ -254,13 +254,13 @@ class BaseGFT(metaclass=ABCMeta):
         fitness_list = [x["fitness"] for x in self.population]
         fitness_list_for_choice = copy.deepcopy(fitness_list)
 
-        """ 将fitness平移到原点，加1e-6是为了防止fitness全为0的情况，会导致之后概率计算出错 """
+        """ Move the fitness to the origin, and add 1e-6 to prevent the fitness from being all 0, which will cause an error in the probability calculation later. """
         fitness_list_for_choice = [x - min(fitness_list_for_choice) + 1e-6 for x in fitness_list_for_choice]
 
         sum_fitness = sum(fitness_list_for_choice)
         fit_pro = [fitness / sum_fitness for fitness in fitness_list_for_choice]
 
-        """ 按照概率分布选择出种群规模条染色体 """
+        """ Select population size chromosomes according to probability distribution """
         selected_population = np.random.choice(self.population, self.population_size, replace=False, p=fit_pro)
 
         use_time = time.time() - start
@@ -278,25 +278,25 @@ class BaseGFT(metaclass=ABCMeta):
 
     def get_offspring(self, parent: list) -> list:
         """
-        根据两个父代个体（Individual）进行交叉后，返回两条新的子代个体（Individual）。
-        @param parent: 父代 individual list
-        @return: 子代 individual list
+        After the two parent individuals (Individual) are crossed, two new offspring individuals (Individual) are returned.
+        @param parent: parent individual list
+        @return: child individual list
         """
         offspring = copy.deepcopy(parent)
 
-        """ 对规则库列表中的每一个规则库进行交叉互换，但只能不同染色体上的相同规则库之间才能进行交叉，通过index来确保相同类型的规则库 """
+        """ Cross-exchange each rule base in the rule base list, but only between the same rule base on different chromosomes, and ensure the same type of rule base through index """
         for index, rule_lib in enumerate(self.rule_lib_list):
             all_term_list = [copy.deepcopy(fuzzy_variable.all_term()) for fuzzy_variable in
                              rule_lib.fuzzy_variable_list]
             current_rule_lib_chromosome_size = len(rule_lib.rule_lib)
             current_mf_chromosome_size = len(all_term_list) * 3
 
-            """ 随机选择交换基因段的左右位点索引（规则库染色体） """
+            """ Randomly select the left and right locus index of the swap gene segment (rule base chromosome) """
             cross_left_position_rule_lib = random.randint(0, current_rule_lib_chromosome_size - 1)
             cross_right_position_rule_lib = random.randint(cross_left_position_rule_lib,
                                                            current_rule_lib_chromosome_size - 1)
 
-            """ 交换子代对应位置的基因片段 """
+            """ Swap the gene segment corresponding to the position of the progeny """
             offspring[0]["rule_lib_chromosome"][index][cross_left_position_rule_lib:cross_right_position_rule_lib + 1], \
                 offspring[1]["rule_lib_chromosome"][index][cross_left_position_rule_lib:cross_right_position_rule_lib + 1] = \
                 offspring[1]["rule_lib_chromosome"][index][
@@ -304,7 +304,7 @@ class BaseGFT(metaclass=ABCMeta):
                 offspring[0]["rule_lib_chromosome"][index][
                 cross_left_position_rule_lib:cross_right_position_rule_lib + 1]
 
-            """ 随机选择交换基因段的左右位点索引（隶属函数染色体） """
+            """ Randomly select the left and right locus index of the swap gene segment (membership function chromosome) """
             cross_left_position_mf = random.randint(0, current_mf_chromosome_size - 1)
             cross_right_position_mf = random.randint(cross_left_position_mf, current_mf_chromosome_size - 1)
 
@@ -313,20 +313,20 @@ class BaseGFT(metaclass=ABCMeta):
                 offspring[1]["mf_chromosome"][index][cross_left_position_mf:cross_right_position_mf + 1], \
                 offspring[0]["mf_chromosome"][index][cross_left_position_mf:cross_right_position_mf + 1]
 
-        """ 新的子代没有被Simulation过，flag置为0，代表需要通过simulation后来计算适应值fitness """
+        """ The new offspring has not been simulated, and the flag is set to 0, which means that the fitness value needs to be calculated later through simulation """
         offspring[0]["flag"] = 0
         offspring[1]["flag"] = 0
         return offspring
 
     def cross(self) -> None:
         """
-        将一个种群（population）中的所有个体（Individual）按概率进行交叉互换，
-        并将子代添加入当前种群中。
+        All individuals (Individual) in a population (population) are cross-exchanged according to probability,
+        and add offspring to the current population.
         @return: None
         """
         offspring = []
         random.shuffle(self.population)
-        """ 相邻两个个体之间进行交叉 """
+        """ Crossover between two adjacent individuals """
         d = list(range(0, len(self.population), 2))
         for i in d:
             pro = random.random()
@@ -337,18 +337,18 @@ class BaseGFT(metaclass=ABCMeta):
 
     def mutate(self) -> None:
         """
-        基因变异函数，对种群中每一个个体（Individual），随机选择染色体中的某一段，
-        对该段中的每一个基因执行一次基因突变。
+        The genetic variation function, for each individual in the population (Individual), randomly selects a certain segment of the chromosome,
+        Perform a gene mutation for each gene in the segment.
         @return: None
         """
-        """ 保护 fitness 前 N 大的染色体不发生变异 """
+        """ Protects the top N largest chromosomes for fitness from mutation """
         self.population.sort(key=lambda x: x["fitness"], reverse=True)
         mutate_population = self.population[self.protect_elite_num:]
 
         for individual in mutate_population:
             pro = random.random()
 
-            """ 对每一个规则库都要进行突变 """
+            """ Mutate each rulebase """
             if pro < self.mutation_pro:
                 for index, rule_lib in enumerate(self.rule_lib_list):
                     output_fuzzy_variable = rule_lib.fuzzy_variable_list[-1]
@@ -360,7 +360,7 @@ class BaseGFT(metaclass=ABCMeta):
                     current_rule_lib_chromosome_size = len(rule_lib.rule_lib)
                     current_mf_chromosome_size = len(all_term_list) * 3
 
-                    """ 选取突变点，并将该点之后的全部基因段进行基因突变（规则库） """
+                    """ Select the mutation point and mutate all gene segments after this point (rule base) """
                     mutation_pos_rule_lib = random.randint(0, current_rule_lib_chromosome_size - 1)
                     gene_num = len(genes)
                     individual["rule_lib_chromosome"][index][mutation_pos_rule_lib:] = [random.randint(0, gene_num - 1)
@@ -369,27 +369,27 @@ class BaseGFT(metaclass=ABCMeta):
                                                                                             current_rule_lib_chromosome_size -
                                                                                             mutation_pos_rule_lib)]
 
-                    """ 选取突变点，并将该点之后的全部基因段进行基因突变（隶属函数） """
+                    """ Select the mutation point and mutate all gene segments after this point (membership function) """
                     mutation_pos_mf = random.randint(0, current_mf_chromosome_size - 1)
                     individual["mf_chromosome"][index][mutation_pos_mf:] = [random.randint(-10, 10) for _ in
                                                                             range(
                                                                                 current_mf_chromosome_size - mutation_pos_mf)]
 
-                """ 变异后的个体flag需被重置 """
+                """ The mutated individual flag needs to be reset """
                 individual["flag"] = 0
 
     def get_optimal_individual(self):
         """
-        获取 fitness 最高的个体对象。
-        @return: 最优 Individual
+        Get the individual object with the highest fitness.
+        @return: optimal Individual
         """
         sorted_population = sorted(self.population, key=lambda x: x["fitness"], reverse=True)
         return sorted_population[0]
 
     def save_all_population(self, file_path: str):
         """
-        将整个种群存放入文件当中（用于保存模型checkpoint，便于下次接着本次训练）。
-        @param file_path: 文件保存目录
+        Store the entire population in a file (used to save the model checkpoint for the next training session).
+        @param file_path: file save directory
         @return: None
         """
         with open(file_path, "w") as f:
@@ -398,8 +398,8 @@ class BaseGFT(metaclass=ABCMeta):
 
     def load_all_population(self, file_path):
         """
-        从文件中载入整个种群。
-        @param file_path: 文件保存目录。
+        Load the entire population from a file.
+        @param file_path: The file save directory.
         @return: None
         """
         try:
@@ -411,25 +411,25 @@ class BaseGFT(metaclass=ABCMeta):
 
     def save_optimal_individual_to_file(self, path_rule_lib, path_mf, path_individual, optimal_individual):
         """
-        将得分值最高的个体（Individual）存入文件中。
-        @param path_individual: 最优个体存放目录（不包含文件后缀名）
-        @param path_rule_lib: 规则库文件存放目录（不包含文件后缀名）
-        @param path_mf: 隶属函数参数文件存放目录（不包含文件后缀名）
-        @param optimal_individual: 最优个体对象
+        Save the individual with the highest score (Individual) into the file.
+        @param path_individual: The optimal individual storage directory (excluding the file suffix)
+        @param path_rule_lib: rule library file storage directory (excluding file suffix)
+        @param path_mf: The directory where the membership function parameter file is stored (excluding the file suffix)
+        @param optimal_individual: optimal individual object
         @return: None
         """
         for index, rule_lib in enumerate(self.rule_lib_list):
-            """ 将每一个规则库存分别放入不同的文件中，文件名中包含规则库编号，如：RuleLib[No.1]，代表1号规则库 """
+            """ Put each rule inventory into a different file, the file name contains the rule library number, such as: RuleLib[No.1], which represents the No. 1 rule library """
             current_path_rule_lib = path_rule_lib + "_[No." + str(index) + "].json"
             current_path_mf = path_mf + "_[No." + str(index) + "].json"
 
             rule_lib.encode_by_chromosome(optimal_individual["rule_lib_chromosome"][index])
 
-            """ 将规则库和隶属函数和个体对象均保存到本地 """
+            """ Save the rule base, membership functions and individual objects to the local """
             rule_lib.save_rule_base_to_file(current_path_rule_lib)
             rule_lib.save_mf_to_file(current_path_mf, optimal_individual)
 
-            """ 最优个体对象，只用存储一次 """
+            """ Optimal individual object, only need to be stored once """
             if not index:
                 current_path_individual = path_individual + ".json"
                 rule_lib.save_individual_to_file(current_path_individual, optimal_individual)
@@ -437,16 +437,16 @@ class BaseGFT(metaclass=ABCMeta):
     def train(self, save_best_rulelib_mf_path="RuleLibAndMF", save_all_path="AllPopulations",
               save_best_individual_path="OptimalIndividuals", base_path="models", load_last_checkpoint=None) -> None:
         """
-        遗传算法训练函数。
-        @param base_path: 模型存放总路径
-        @param save_all_path: 种群存放路径
-        @param save_best_rulelib_mf_path: 最优个体存放路径
-        @param save_best_individual_path: 个体模型存放路径
-        @param load_last_checkpoint: 是否载入之前的模型继续学习，若设置该形参为 all_population.json 文件存放路径
+        Genetic algorithm training function.
+        @param base_path: The total path where the model is stored
+        @param save_all_path: kindgroup storage path
+        @param save_best_rulelib_mf_path: optimal individual storage path
+        @param save_best_individual_path: individual model storage path
+        @param load_last_checkpoint: Whether to load the previous model to continue learning, if this parameter is set as the storage path of the all_population.json file
         @return: None
         """
 
-        """ 若目录不存在则新建目录文件夹 """
+        """ If the directory does not exist, create a new directory folder """
         if not os.path.exists(base_path):
             os.mkdir(base_path)
 
@@ -490,7 +490,7 @@ class BaseGFT(metaclass=ABCMeta):
 
     def evaluate(self, model_name: str):
         """
-        使用已存储模型，查看训练效果。
+        Use the stored model to see the training effect.
         @return: None
         """
         individual = json.load(open(model_name, 'r'))
@@ -499,18 +499,18 @@ class BaseGFT(metaclass=ABCMeta):
 
         gft_controllers = []
         for index, rule_lib in enumerate(self.rule_lib_list):
-            """ 将RuleLib中的数字编码染色体解析为包含多个Rule对象的列表 """
+            """ Parse numerically encoded chromosomes in RuleLib into a list containing multiple Rule objects """
             rl = RuleLib(rule_lib.fuzzy_variable_list)
             rl.encode_by_chromosome(individual["rule_lib_chromosome"][index])
             rules = rl.decode()
 
-            """ 对模糊变量的隶属函数参数进行重计算，根据染色体中的隶属函数偏移offset来更改隶属函数三角形的三个点坐标 """
+            """ Recalculate the membership function parameters of the fuzzy variables, and change the coordinates of the three points of the membership function triangle according to the membership function offset offset in the chromosome. """
             new_fuzzy_variable_list = copy.deepcopy(rule_lib.fuzzy_variable_list)
             count = 0
             for fuzzy_variable in new_fuzzy_variable_list:
                 for k, v in fuzzy_variable.terms.items():
                     if (v.trimf[0] == v.trimf[1] and v.trimf[1] == v.trimf[2] and v.trimf[2] == 0) or (
-                            v.trimf[0] == -666):  # 类别型模糊变量
+                            v.trimf[0] == -666): # categorical fuzzy variable
                         count += 3
                         continue
                     offset_value = v.span / 20
@@ -518,11 +518,11 @@ class BaseGFT(metaclass=ABCMeta):
                     new_b = v.trimf[1]
                     new_c = v.trimf[2] + individual["mf_chromosome"][index][count + 2] * offset_value
                     new_tri = [new_a, new_b, new_c]
-                    new_tri.sort()  # 因为平移有正有负，平移后可能会出现a点平移到了b点右边，但三角形的三个点不能乱序，因此需要按从小到大排序
+                    new_tri.sort() # Because there are positive and negative translations, point a may move to the right of point b after translation, but the three points of the triangle cannot be out of order, so they need to be sorted from small to large
                     count += 3
                     v.trimf = new_tri
 
-            """ 构建FIS推理器 """
+            """ Build FIS Reasoner """
             now_ds = DecisionSystem(new_fuzzy_variable_list, rules)
             now_dss = DecisionSystemSimulation(now_ds)
             gft_controllers.append(now_dss)
@@ -534,10 +534,10 @@ class BaseGFT(metaclass=ABCMeta):
     @abstractmethod
     def start_simulation(self, controllers: list, simulator) -> float:
         """
-        仿真器，用于根据FIS决策器的行为决策更新，获取并返回fitness。
-        @param simulator: 仿真器对象。
-        @param controllers: 包含继承自DecisionSystemSimulation的仿真器对象列表
-        @return: 适应值
+        Simulator, used to update according to the behavioral decision of the FIS decider, get and return fitness.
+        @param simulator: Simulator object.
+        @param controllers: contains a list of simulator objects that inherit from DecisionSystemSimulation
+        @return: fitness value
         """
         pass
 
