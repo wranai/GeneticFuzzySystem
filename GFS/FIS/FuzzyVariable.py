@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 class FuzzyVariable(object):
     def __init__(self, universe, label, defuzzify_method='mom'):
         """
-        模糊变量：用于FIS进行决策的输入、输出变量
-        :param label: 变量的名称
-        :param universe: 变量的取值范围
-        :param terms: 该变量可以模糊化为哪些类别
+        Fuzzy variables: input and output variables used for FIS to make decisions
+        :param label: the name of the variable
+        :param universe: the value range of the variable
+        :param terms: which categories the variable can be fuzzed into
         """
         self.label = label
         self.universe_down = universe[0]
@@ -25,9 +25,9 @@ class FuzzyVariable(object):
 
     def __getitem__(self, key):
         """
-        可以使用variable["label"]访问“label”term
-        :param key: term的label
-        :return: 对应的term
+        The "label" term can be accessed using variable["label"]
+        :param key: label of term
+        :return: the corresponding term
         """
         if key in self.terms.keys():
             return self.terms[key]
@@ -51,9 +51,9 @@ class FuzzyVariable(object):
 
     def __setitem__(self, key, item):
         """
-        可以使用variable["new_label"] = new_term为模糊变量设置新的item
-        :param key:term的label
-        :param item:新的term实例
+        A new item can be set for the fuzzy variable using variable["new_label"] = new_term
+        :param key: label of term
+        :param item: new term instance
         :return:
         """
         if isinstance(item, Term):
@@ -67,14 +67,14 @@ class FuzzyVariable(object):
 
     def automf(self, number=5, variable_type='quantity', discrete=False, names=None, special_case=False, special_mf_abc=None, special_case_name="special_case"):
         """
-        生成指定数量的Term，其隶属函数默认为三角型隶属函数
-        @param discrete: 该变量是否为离散型变量，如代表类别型的变量只能取（1，2，3），不能取 1.33
-        @param number: 生成的Term数量（不包括特殊隶属类），默认值为5
-        @param variable_type: 质量型或者数量型(quality, quantity)
-        @param names: 相应Term的名字，其数量应该与number相同
-        @param special_mf_abc: 特殊隶属类的三角形顶点值
-        @param special_case: 是否自动分配特殊隶属类
-        @param special_case_name: 特殊隶属类的名称，默认为 special_case
+        Generates a specified number of Term, whose membership function defaults to a triangular membership function
+        @param discrete: Whether the variable is a discrete variable, for example, a variable representing a categorical type can only take (1, 2, 3), not 1.33
+        @param number: The number of terms generated (excluding special membership classes), the default value is 5
+        @param variable_type: quality or quantity (quality, quantity)
+        @param names: The name of the corresponding Term, its number should be the same as number
+        @param special_mf_abc: triangle vertex value of special membership class
+        @param special_case: Whether to automatically assign special membership classes
+        @param special_case_name: The name of the special subordinate class, the default is special_case
         """
         if not discrete:
             if names is not None:
@@ -121,7 +121,7 @@ class FuzzyVariable(object):
             # Clear existing adjectives, if any
             self.terms = OrderedDict()
 
-            """ 若存在特殊隶属类，则将特殊隶属类添加到最后一项 """
+            """ If there is a special membership class, add the special membership class to the last item """
             if special_case:
                 assert special_mf_abc, "[ERROR] You must specify the special_mf_abc value for special mf function."
                 names.append(special_case_name)
@@ -131,7 +131,7 @@ class FuzzyVariable(object):
             index = 0
             for name, abc in zip(names, abcs):
                 term = Term(name, self.label, abc, index)
-                index += 1
+                index +=1
                 self[name] = term
         else:
             abcs = [[0, 0, 0] for _ in range(number)]
