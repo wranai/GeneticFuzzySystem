@@ -12,23 +12,23 @@ class GFT(BaseGFT):
 
     def __init__(self, rule_lib_list, population_size, episode, mutation_pro, cross_pro, simulator, parallelized):
         """
-        实现自定义GFT子类（继承自BaseGFT基类）并实现自定义计算仿真方法。
-        @param rule_lib_list: 规则库对象
-        @param population_size: 种群规模（存在的染色体条数，可以理解为存在的规则库个数）
-        @param episode: 训练多少轮
-        @param mutation_pro: 变异概率
-        @param cross_pro: 交叉概率
-        @param simulator: 仿真器对象，用于获取观测和回报
-        @param parallelized: 是否启用多进程并行计算
+        Implement custom GFT subclasses (inherited from BaseGFT base class) and implement custom computational simulation methods.
+        @param rule_lib_list: rule library object
+        @param population_size: Population size (the number of existing chromosomes, which can be understood as the number of existing rule bases)
+        @param episode: how many epochs to train
+        @param mutation_pro: mutation probability
+        @param cross_pro: cross probability
+        @param simulator: Simulator object, used to get observations and reports
+        @param parallelized: whether to enable multi-process parallel computing
         """
         super().__init__(rule_lib_list, population_size, episode, mutation_pro, cross_pro, simulator, parallelized)
 
-    """ 实现父类抽象方法 """
+    """ Implement parent class abstract method """
     def start_simulation(self, controllers: list, simulator) -> float:
         """
-        自定义 GFT 算法模块与仿真器 Simulator（gym） 之间的数据交互过程，返回仿真器的 reward 值。
-        @param simulator: 仿真器对象
-        @param controllers: 控制器列表，一个controller决策一个行为。
+        Customize the data interaction process between the GFT algorithm module and the simulator Simulator (gym), and return the reward value of the simulator.
+        @param simulator: Simulator object
+        @param controllers: List of controllers, one controller decides one action.
         @return: fitness
         """
         controller = controllers[0]
@@ -39,7 +39,7 @@ class GFT(BaseGFT):
 
             # simulator.render()
 
-            """ CartPole-v0 中共包含 4 个观测，在FIS决策器中需要对应拆分成 4 个模糊变量输入 """
+            """ CartPole-v0 contains a total of 4 observations, which need to be split into 4 fuzzy variable inputs in the FIS decider. """
             obs_input = {
                 "car_pos": obs_list[0],
                 "car_speed": obs_list[1],
@@ -47,11 +47,11 @@ class GFT(BaseGFT):
                 "pole_speed": obs_list[3]
             }
 
-            action = controller.simulation_get_action(obs_input)    # 利用 FIS 决策器获得行为决策
+            action = controller.simulation_get_action(obs_input) # Use FIS decider to get action decision
             obs_list, r, done, _ = simulator.step(action)
             fitness += r
 
-            """ Reward Shaping: 若杆子与垂直面夹角越小则得分越高 """
+            """ Reward Shaping: The smaller the angle between the pole and the vertical plane, the higher the score """
             # angle = abs(obs_list[2])
             # r_shaping = (0.418 - angle) / 0.418
             #
@@ -65,11 +65,11 @@ class GFT(BaseGFT):
 
 def create_gft(simulator) -> GFT:
     """
-    建立GFT对象，根据具体场景建立模糊变量与规则库。
-    @return: GFT对象
+    Establish GFT objects, and establish fuzzy variables and rule bases according to specific scenarios.
+    @return: GFT object
     """
 
-    """ 1. 构建模糊变量，采用 gym 中 CartPole-v0 作为示例，共包含 4 个观测输入，1 个行为输出 """
+    """ 1. Construct a fuzzy variable, using CartPole-v0 in gym as an example, containing a total of 4 observation inputs and 1 behavior output """
     obs1 = FuzzyVariable([-4.9, 4.9], "car_pos")
     obs2 = FuzzyVariable([-3.40e+38, 3.40e+38], "car_speed")
     obs3 = FuzzyVariable([-0.418, 0.418], "pole_angle")
@@ -77,17 +77,17 @@ def create_gft(simulator) -> GFT:
 
     action = FuzzyVariable([0, 1], "action")
 
-    """ 2. 为模糊变量分配隶属函数 """
+    """ 2. Assign membership functions to fuzzy variables """
     obs1.automf(5)
     obs2.automf(5)
     obs3.automf(5)
     obs4.automf(5)
-    action.automf(2, discrete=True)     # 行为输出是离散型的模糊变量
+    action.automf(2, discrete=True) # Action output is a discrete fuzzy variable
 
-    """ 3. 构建 RuleLib 规则库 """
+    """ 3. Build RuleLib rule base """
     controller = RuleLib([obs1, obs2, obs3, obs4, action])
 
-    """ 4. 构建 GFT 对象 """
+    """ 4. Build the GFT object """
     return GFT(rule_lib_list=[controller], population_size=20, episode=200, mutation_pro=0.1, cross_pro=0.9,
                simulator=simulator, parallelized=False)
 
