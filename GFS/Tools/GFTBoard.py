@@ -11,7 +11,7 @@ import json
 
 def plot_callback():
     """
-    绘制训练中的 Fitness 曲线图。
+    Graph the Fitness curve during training.
     @return: None
     """
     max_f = get_data("max_fitness")
@@ -30,7 +30,7 @@ def plot_callback():
 
 def choose_log_file(sender, data):
     """
-    选择 GFT Log 文件。
+    Select the GFT Log file.
     @return: None
     """
     open_file_dialog(callback=apply_select_log_file, extensions='.gft,.*')
@@ -38,7 +38,7 @@ def choose_log_file(sender, data):
 
 def choose_individual_file(sender, data):
     """
-    选择 GFT Log 文件。
+    Select the GFT Log file.
     @return: None
     """
     if not get_data("rule_lib_list"):
@@ -48,8 +48,8 @@ def choose_individual_file(sender, data):
 
 def view_gft_info(gft_log):
     """
-    查看训练超参数，突变概率，交叉概率等。
-    @param gft_log: log 字典
+    See training hyperparameters, mutation probabilities, crossover probabilities, and more.
+    @param gft_log: log dictionary
     @return: None
     """
     if not get_data("first_load_hyper"):
@@ -69,7 +69,7 @@ def view_gft_info(gft_log):
 
 def apply_select_log_file(sender, data):
     """
-    每次选择 Log 文件后需要执行的函数，重载训练参数。
+    The function that needs to be executed every time the Log file is selected, and the training parameters are reloaded.
     @return: None
     """
     directory = data[0]
@@ -89,8 +89,8 @@ def apply_select_log_file(sender, data):
 
 def visualize_individual(individual: dict):
     """
-    将 Individual 可视化为人类方便理解的规则库。
-    @param individual: 个体对象
+    Visualize Individual as a human-friendly rulebase.
+    @param individual: individual object
     @return: None
     """
     rules_text_list = []
@@ -115,7 +115,7 @@ def visualize_individual(individual: dict):
 
 def apply_select_individual_file(sender, data):
     """
-    每次选择 Individual 个体后需要执行的函数，可视化规则库。
+    The function that needs to be executed each time an Individual is selected, and the rule base is visualized.
     @return: None
     """
     directory = data[0]
