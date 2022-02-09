@@ -1,9 +1,9 @@
 class Rule(object):
     def __init__(self, antecedent, consequent):
         """
-        模糊规则定义，每一条模糊规则由规则前件与规则结果组成
-        :param antecedent: 规则前件
-        :param consequent: 规则结果
+        Fuzzy rule definition, each fuzzy rule consists of rule antecedents and rule results
+        :param antecedent: rule antecedent
+        :param consequent: rule result
         """
         self.antecedent = antecedent
         self.consequent = consequent
