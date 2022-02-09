@@ -12,13 +12,13 @@ class RuleLib(object):
         self.chromosome = None
         if fuzzy_variable_list:
             self.fuzzy_variable_list = copy.deepcopy(fuzzy_variable_list)
-            self.generate_random_rule_base(len(self.fuzzy_variable_list) - 1)   # 初始化规则库，默认规则前件个数等于模糊变量总长度-1
+            self.generate_random_rule_base(len(self.fuzzy_variable_list) - 1) # Initialize the rule base, the number of default rule preconditions is equal to the total length of fuzzy variables -1
         self.count = 0
 
     def encode(self, rules):
         """
-        将Rule集进行编码，以便表示与保存
-        :param rules: Rule集合
+        Encode the Rule set for representation and storage
+        :param rules: Rule collection
         :return:
         """
         rule_lib = []
@@ -37,8 +37,8 @@ class RuleLib(object):
 
     def encode_by_chromosome(self, chromosome) -> None:
         """
-        通过染色体基因还原整个规则库，由 [a1, a2, a3, ...] 变成 [[condition1, a1], [condition2, a2], ...]。
-        @param chromosome: 染色体组
+        Restore the entire rule base by chromosomal genes, from [a1, a2, a3, ...] to [[condition1, a1], [condition2, a2], ...].
+        @param chromosome: chromosome group
         @return: None
         """
         rule_code = []
@@ -67,8 +67,8 @@ class RuleLib(object):
 
     def decode(self) -> list:
         """
-        将编码表示的规则库解析成FIS系统中的Rule对象。
-        @return: 包含N个Rule对象的规则列表
+        The rule base represented by the code is parsed into a Rule object in the FIS system.
+        @return: a list of rules containing N Rule objects
         """
         rules = []
         rule_len = len(self.fuzzy_variable_list)
@@ -94,8 +94,8 @@ class RuleLib(object):
 
     def generate_random_rule_base(self, length):
         """
-        通过随机生成规则来填满规则库。
-        @param length: 有多少个规则前件
+        Fill the rule base by randomly generating rules.
+        @param length: how many rule antecedents there are
         @return: None
         """
         rule_code = []
@@ -119,8 +119,8 @@ class RuleLib(object):
 
     def load_rule_base_from_file(self, filepath):
         """
-        从文件中加载规则库
-        filepath:规则文件存放路径
+        Load rule base from file
+        filepath: rule file storage path
         :return:
         """
         with open(filepath, "r") as f:
@@ -130,9 +130,9 @@ class RuleLib(object):
 
     def save_individual_to_file(self, filepath, individual: dict):
         """
-        将最优个体保存成本地文件
-        :param individual: 个体对象
-        :param filepath: 保存文件的路径
+        Save the optimal individual to a local file
+        :param individual: the individual object
+        :param filepath: path to save file
         :return: None
         """
         with open(filepath, "w") as f:
@@ -140,8 +140,8 @@ class RuleLib(object):
 
     def save_rule_base_to_file(self, filepath):
         """
-        将规则库保存成本地文件
-        :param filepath: 保存文件的路径
+        Save the rulebase to a local file
+        :param filepath: path to save file
         :return: None
         """
         with open(filepath, "w") as f:
@@ -150,9 +150,9 @@ class RuleLib(object):
 
     def save_mf_to_file(self, filepath, optimal_individual):
         """
-        将隶属函数参数保存成本地文件
-        @param optimal_individual: 最优个体对象
-        @param filepath: 保存文件路径
+        Save membership function parameters to a local file
+        @param optimal_individual: optimal individual object
+        @param filepath: save file path
         @return: None
         """
         with open(filepath, "w") as f:
